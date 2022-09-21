@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Authors>Nikki Locke</Authors>
+    <Company>Trumphurst Ltd.</Company>
+    <Description>C# wrapper for the Nextcloud API</Description>
+    <Copyright>(c) 2019 Trumphurst Ltd.</Copyright>
+    <PackageProjectUrl>https://github.com/nikkilocke/NextcloudApi</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/nikkilocke/NextcloudAp</RepositoryUrl>
+    <RepositoryType>Github</RepositoryType>
+    <PackageTags>Nextcloud C# API</PackageTags>
+    <PackageReleaseNotes>Fix Group Folder List</PackageReleaseNotes>
+    <Version>1.0.17</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MimeMapping" Version="1.0.1.12" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
+  </ItemGroup>
+
+</Project>
