@@ -328,12 +328,13 @@ namespace NextcloudApi {
 			}));
 			string code = await WaitForRedirect(this, state);
             //index.php/apps/oauth2/api/v1/token
+            //https://cloud.example.org/index.php/apps/oauth2/api/v1/token
             var result = await SendMessageAsync(HttpMethod.Post, Settings.ServerUri + "index.php/apps/oauth2/api/v1/token", new {
 				grant_type = "authorization_code",
-				client_id = Settings.ClientId,
-				redirect_uri = Settings.RedirectUri.ToString(),
+				client_id = Settings.ClientId,				
 				client_secret = Settings.ClientSecret,
-				code
+                redirect_uri = Settings.RedirectUri.ToString(),
+                code
 			});
 			Token token = result.ToObject<Token>();
 			if (string.IsNullOrEmpty(token.access_token))
@@ -481,10 +482,13 @@ namespace NextcloudApi {
 				string content = null;
 				using (DisposableCollection disposeMe = new DisposableCollection()) {
 					var message = disposeMe.Add(new HttpRequestMessage(method, uri));
-					if(!string.IsNullOrEmpty(Settings.Username) && !string.IsNullOrEmpty(Settings.Password))
-						message.Headers.Authorization = new AuthenticationHeaderValue("Basic", basicAuth());
-					else if (!string.IsNullOrEmpty(Settings.AccessToken))
-						message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Settings.AccessToken);
+                    if (!string.IsNullOrEmpty(Settings.AccessToken))
+                        message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Settings.AccessToken);
+					else
+                    if (!string.IsNullOrEmpty(Settings.Username) && !string.IsNullOrEmpty(Settings.Password))
+					{
+						//message.Headers.Authorization = new AuthenticationHeaderValue("Basic", basicAuth());
+					}
 					message.Headers.Add("OCS-APIRequest", "true");
 					message.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 					message.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/html"));

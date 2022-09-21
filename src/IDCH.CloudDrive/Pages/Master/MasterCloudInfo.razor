@@ -1,0 +1,212 @@
+﻿@page "/master/CloudInfo"
+
+@inject IJSRuntime jsRuntime
+@inject NavigationManager NavMgr
+@inject IToastService toastService
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+@inject IDialogService DialogService
+@inject CloudInfoService service
+@using System.IO
+@using Microsoft.AspNetCore.Components.Authorization
+@using NextcloudApi
+
+<h1>Daftar Folder</h1>
+
+<p>Gunakan halaman ini untuk melihat info folder.</p>
+
+@if (DataCloudInfo == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <MudTable Context="item" Items="@DataCloudInfo" Dense="@dense" Hover="@hover" Bordered="@bordered" Striped="@striped" Filter="new Func<CloudInfo,bool>(FilterFunc1)" @bind-SelectedItem="selectedItem1">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Data CloudInfo</MudText>
+            <MudSpacer />
+            <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh>LastModified</MudTh>
+            <MudTh>FileId</MudTh>
+            <MudTh>Path</MudTh>
+            <MudTh>Tag</MudTh>
+            <MudTh>CommentsCount</MudTh>
+            <MudTh>OwnerDisplayName</MudTh>
+            <MudTh>Size</MudTh>
+            <MudTh>Favorite</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="LastModified">@item.LastModified?.ToString("dd/MMM/yyyy HH:mm")</MudTd>
+            <MudTd DataLabel="FileId">@item.FileId</MudTd>
+            <MudTd DataLabel="Path">@item.Path</MudTd>
+            <MudTd DataLabel="Tag">@item.Tag</MudTd>
+            <MudTd DataLabel="CommentsCount">@item.CommentsCount</MudTd>
+            <MudTd DataLabel="OwnerDisplayName">@item.OwnerDisplayName</MudTd>
+            <MudTd DataLabel="Size">@item.Size?.ToString("n0")</MudTd>
+            <MudTd DataLabel="Favorite">@item.Favorite</MudTd>
+            <MudTd DataLabel="Actions">
+                @if (HasLogin)
+                {
+                    @*<MudButton ButtonType="ButtonType.Button" @onclick="(() => PrepareForEdit(item))" DisableElevation="true" Variant="Variant.Filled" Color="Color.Primary" Class="mr-2">Ubah</MudButton>*@
+                    <MudButton ButtonType="ButtonType.Button" @onclick="(() => PrepareForDelete(item))" DisableElevation="true" Variant="Variant.Filled" Color="Color.Error" Class="mr-2">Hapus</MudButton>
+                }
+            </MudTd>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+    </MudTable>
+
+    <div class="d-flex flex-wrap mt-4">
+        <MudSwitch @bind-Checked="@hover" Color="Color.Primary">Hover</MudSwitch>
+        <MudSwitch @bind-Checked="@dense" Color="Color.Secondary">Dense</MudSwitch>
+        <MudSwitch @bind-Checked="@striped" Color="Color.Tertiary">Striped</MudSwitch>
+        <MudSwitch @bind-Checked="@bordered" Color="Color.Warning">Bordered</MudSwitch>
+    </div>
+
+
+}
+@if (HasLogin)
+{
+    <MudPaper Class="pa-4 mt-4">
+        @*<MudButton ButtonType="ButtonType.Button" @onclick="(() => InitializeitemObject())" DisableElevation="true" Variant="Variant.Filled" Color="Color.Primary" Class="mr-2">Masukan CloudInfo Baru</MudButton>*@
+    </MudPaper>
+}
+
+@code {
+    bool HasLogin = false;
+    CloudInfoDetail detail;
+
+    string customHeader = string.Empty;
+    List<CloudInfo> DataCloudInfo;
+    CloudInfo itemObject = new CloudInfo();
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+    string UserName;
+
+    private bool dense = false;
+    private bool hover = true;
+    private bool striped = false;
+    private bool bordered = false;
+    private string searchString1 = "";
+    private CloudInfo selectedItem1 = null;
+
+    private HashSet<CloudInfo> selectedItems = new HashSet<CloudInfo>();
+
+    private bool FilterFunc1(CloudInfo element) => FilterFunc(element, searchString1);
+
+    private bool FilterFunc(CloudInfo element, string searchString)
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+        if (element.FileId.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.OwnerDisplayName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.Path.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.Tag.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
+    }
+
+    async Task DownloadFile(string Url)
+    {
+        if (!string.IsNullOrEmpty(Url))
+        {
+            NavMgr.NavigateTo(Url, true);
+        }
+        else
+        {
+            toastService.ShowError("Url kosong atau tidak valid.");
+        }
+    }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+
+
+        var user = (await authenticationStateTask).User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            UserName = user.Identity.Name;
+            HasLogin = true;// Userservice.GetUserRole(UserName) == Roles.Admin;
+        }
+        
+        DataCloudInfo = await service.GetAllData();
+
+
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+        }
+    }
+
+    private async Task InitializeitemObject()
+    {
+
+        itemObject = new CloudInfo();
+
+        customHeader = "Masukan CloudInfo Baru";
+
+        var action = new Action(DataChanged);
+        var parameters = new DialogParameters { ["TaskObject"] = itemObject, ["CustomHeader"] = customHeader, ["DataChanged"] = action };
+
+        var dialog = DialogService.Show<CloudInfoDetail>(customHeader, parameters);
+        var result = await dialog.Result;
+
+        if (!result.Cancelled)
+        {
+            //In a real world scenario we would reload the data from the source here since we "removed" it in the dialog already.
+            long.TryParse(result.Data.ToString(), out var NewId);
+        }
+    }
+    private async void DataChanged()
+    {
+        DataCloudInfo = await service.GetAllData();
+        StateHasChanged();
+    }
+
+    private async Task PrepareForEdit(CloudInfo item)
+    {
+        customHeader = "Ubah Data CloudInfo";
+        itemObject = item;
+        var action = new Action(DataChanged);
+        var parameters = new DialogParameters { ["TaskObject"] = itemObject, ["CustomHeader"] = customHeader, ["DataChanged"] = action };
+
+        var dialog = DialogService.Show<CloudInfoDetail>(customHeader, parameters);
+        var result = await dialog.Result;
+
+        if (!result.Cancelled)
+        {
+            //In a real world scenario we would reload the data from the source here since we "removed" it in the dialog already.
+            long.TryParse(result.Data.ToString(), out var NewId);
+        }
+
+    }
+    private async Task PrepareForDelete(CloudInfo item)
+    {
+        itemObject = item;
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+        var dialog = DialogService.Show<ConfirmDialog>("Konfirmasi", options);
+        var result = await dialog.Result;
+
+        if (!result.Cancelled)
+        {
+            var task = await service.DeleteData(itemObject.Path);
+            //await jsRuntime.InvokeAsync<object>("CloseModal", "confirmDeleteModal");
+            DataCloudInfo = await service.GetAllData();
+            itemObject = new CloudInfo() { Id = "" };
+        }
+    }
+
+
+}
+

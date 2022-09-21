@@ -7,6 +7,16 @@ using System.Threading.Tasks;
 
 namespace IDCH.CloudDrive.Models
 {
+    public interface ICrud<T> where T : class
+    {
+        Task<bool> InsertData(T data);
+        Task<bool> UpdateData(T data);
+        Task<List<T>> GetAllData();
+        Task<T> GetDataById(long Id);
+        Task<bool> DeleteData(long Id);
+        Task<long> GetLastId();
+        Task<List<T>> FindByKeyword(string Keyword);
+    }
     [DataContract]
     public class AuthenticatedUserModel
     {

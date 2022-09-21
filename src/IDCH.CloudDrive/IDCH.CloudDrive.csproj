@@ -76,10 +76,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Pages\Master\" />
-    </ItemGroup>
-
-    <ItemGroup>
       <Reference Include="GemBox.Document">
         <HintPath>..\Dependencies\GemBox.Document.dll</HintPath>
       </Reference>

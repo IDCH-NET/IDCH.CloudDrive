@@ -1,4 +1,5 @@
-﻿using NextcloudApi;
+﻿using IDCH.CloudDrive.Data;
+using NextcloudApi;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -50,9 +51,10 @@ namespace IDCH.CloudDrive.Services
                     Directory.CreateDirectory(dataPath);
                     string filename = Path.Combine(dataPath, "TestSettings.json");
                     _settings = new Settings();
-                    _settings.ApplicationName = "files";
-                    _settings.ServerUri = new Uri("https://drive.idcloudhost.com/");
-                    _settings.RedirectUri = new Uri("https://drive.idcloudhost.com/");
+                    _settings.ApplicationName = "fadhil_customer";
+                    _settings.ServerUri = new Uri(AppConstants.ServerURI);
+                    _settings.RedirectUri = new Uri(AppConstants.RedirectURI);
+                    //_settings.RedirectAfterLogin = AppConstants.RedirectURI;
                     _settings.Load(filename);
                     List<string> errors = _settings.Validate();
                     if (errors.Count > 0)
@@ -64,7 +66,21 @@ namespace IDCH.CloudDrive.Services
         }
 
         const string alphabet = "ybndrfg8ejkmcpqxot1uwisza345h769";
+        public CloudApi()
+        {
+            if (Api != null && !string.IsNullOrEmpty( Api.Settings.AccessToken))
+            {
+                Users = new UserLib(Api);
+                Groups = new GroupLib(Api);
+                GroupFolders = new GroupFolderLib(Api);
+                Folders = new FolderLib(Api, Settings);
+            }
+        }
 
+        public bool IsReady()
+        {
+            return !string.IsNullOrEmpty(Api.Settings.AccessToken);
+        }
         public string UniqueId()
         {
             Guid guid = Guid.NewGuid();
@@ -81,13 +97,14 @@ namespace IDCH.CloudDrive.Services
             return output.ToString().Substring(0, 26);
         }
 
-        public async Task<bool> Login(string username,string password)
+        public async Task<bool> Login(string username, string password)
         {
             try
             {
                 if (Settings != null)
                 {
-                    Settings.ClientId = "idch-clouddrive";
+                    Settings.ClientId = AppConstants.ClientIdNextCloud;
+                    Settings.ClientSecret = AppConstants.ClientSecretNextCloud;
                     Settings.Username = username;
                     Settings.Password = password;
                     var errs = Settings.Validate();
@@ -102,18 +119,18 @@ namespace IDCH.CloudDrive.Services
                     }
                     else
                     {
-                        Console.WriteLine("validation auth error:" +String.Join(',',errs));
+                        Console.WriteLine("validation auth error:" + String.Join(',', errs));
                     }
-                  
+
                 }
-               
+
             }
             catch (Exception ex)
             {
                 Console.WriteLine("login error:" + ex.ToString());
                 return false;
             }
-            
+
             return false;
         }
     }
@@ -208,8 +225,8 @@ namespace IDCH.CloudDrive.Services
             var obj = await GroupFolder.Get(Api, FolderId);
             return obj;
         }
-      
-        public async Task<bool> CreateFolder(string Name, GroupFolder.Permissions Permission = GroupFolder.Permissions.All, long Quota= 1000000000)
+
+        public async Task<bool> CreateFolder(string Name, GroupFolder.Permissions Permission = GroupFolder.Permissions.All, long Quota = 1000000000)
         {
             try
             {
@@ -230,8 +247,8 @@ namespace IDCH.CloudDrive.Services
                 Console.WriteLine($"create folder error:{ex}");
                 return false;
             }
-          
-       
+
+
         }
 
         public async Task<bool> DeleteFolder(int GroupId)
@@ -259,7 +276,7 @@ namespace IDCH.CloudDrive.Services
     {
         Settings Settings;
         Api Api;
-        public FolderLib(Api api,Settings settings)
+        public FolderLib(Api api, Settings settings)
         {
             this.Settings = settings;
             this.Api = api;
@@ -270,6 +287,7 @@ namespace IDCH.CloudDrive.Services
             try
             {
                 var list = await CloudFolder.List(Api, Settings.Username);
+
                 return list;
             }
             catch (Exception ex)
@@ -277,16 +295,16 @@ namespace IDCH.CloudDrive.Services
                 Console.WriteLine($"list folder error: {ex}");
                 return default;
             }
-           
+
         }
-      
+
         public async Task<List<CloudInfo>> ListAll()
         {
             var list = await CloudFolder.List(Api, Settings.Username + "/Documents", CloudInfo.Properties.All);
             return list;
         }
-        
-        public async Task SetFavorite(string FolderName="Documents", bool State=true)
+
+        public async Task SetFavorite(string FolderName = "Documents", bool State = true)
         {
             string docs = Settings.Username + "/" + FolderName;
             await CloudFolder.SetFavorite(Api, docs, State);
@@ -295,13 +313,14 @@ namespace IDCH.CloudDrive.Services
         public async Task<List<CloudInfo>> GetFavorites()
         {
             var list = await CloudFolder.GetFavorites(Api, Settings.Username, CloudInfo.Properties.All);
-            return list;      
+            return list;
         }
-      
+
         public async Task<bool> CreateFolder(string FolderName = "Documents/test")
         {
             try
             {
+
                 await CloudFolder.Create(Api, Settings.Username + "/" + FolderName);
                 return true;
             }
@@ -310,7 +329,7 @@ namespace IDCH.CloudDrive.Services
                 Console.WriteLine("create folder error:{ex}");
                 return false;
             }
-          
+
         }
         public async Task<bool> DeleteFolder(string FolderName = "Documents/test")
         {
@@ -323,20 +342,20 @@ namespace IDCH.CloudDrive.Services
             {
                 Console.WriteLine($"delete folder error: {ex}");
                 return false;
-            }    
-         
+            }
+
         }
         public async Task<List<Comment>> ListComments(string FolderName = "Documents")
         {
             try
             {
-                CloudInfo props = await CloudInfo.GetProperties(Api, Settings.Username + "/"+FolderName, CloudInfo.Properties.FileId);
+                CloudInfo props = await CloudInfo.GetProperties(Api, Settings.Username + "/" + FolderName, CloudInfo.Properties.FileId);
                 if (props != null)
                 {
                     var list = await Comment.List(Api, props.FileId);
                     return list.List;
                 }
-                
+
 
             }
             catch (Exception ex)
@@ -344,7 +363,7 @@ namespace IDCH.CloudDrive.Services
                 Console.WriteLine($"list comment error: {ex}");
             }
             return default;
-           
+
         }
     }
-    }
+}

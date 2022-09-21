@@ -6,7 +6,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IDCH.CloudDrive", "IDCH.Clo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NextcloudApi", "NextcloudApi\NextcloudApi.csproj", "{EC607322-B844-4A8C-87F5-0FED960C9D6B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IDCH.Tools", "IDCH.Tools\IDCH.Tools.csproj", "{A1A89813-07B0-43A9-B44B-3D84942359C5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IDCH.Tools", "IDCH.Tools\IDCH.Tools.csproj", "{A1A89813-07B0-43A9-B44B-3D84942359C5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

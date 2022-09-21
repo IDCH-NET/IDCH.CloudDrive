@@ -78,7 +78,8 @@ public static class MauiProgram
 
 
         //data service
-        services.AddTransient<CloudApi>();
+        services.AddSingleton<CloudApi>();
+        services.AddSingleton<CloudInfoService>();
         services.AddTransient<WeatherForecastService>();
 
     }
